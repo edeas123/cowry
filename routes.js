@@ -190,9 +190,10 @@ var buy = function(req, res) {
 	// parse query to get request data
 	var address = req.query.address; // address of the buyer
 	var resource = req.query.resource; // the resource identifier
+	var sym_key = req.query.key; // symmetric key (hex string)
 
 	// make atomic transactions
-	blockchain.offer_transact(resource, address)
+	blockchain.offer_transact(resource, address, sym_key)
 
 	.then(function(result) {
 		res.send({
@@ -235,6 +236,7 @@ var sell = function(req, res) {
 				var data = result[0]['value']
 				var private_key = result[0]['private_key']
 				var address = result[0]['address']
+				//var address = "1ML34xbhBx1HivynmjkXu8agLX5tzvU53w87RB";//result[0]['address']
 
 				// TODO: decrypt the data, using the appropriate private key
 				var txn_data = utils.decode_data(item['data']);
@@ -274,19 +276,10 @@ var rate = function(req, res) {
 
 }
 
-
-
-var search = function(req, res) {
+var view_users = function(req, res) {
 
 	// console.log
-	console.log("search");
-
-}
-
-var view_user = function(req, res) {
-
-	// console.log
-	console.log("view_user");
+	console.log("view_users");
 
 	// parse query to get request data
 	var hashid = req.query.address
@@ -304,25 +297,74 @@ var view_user = function(req, res) {
 	});
 }
 
-var view_resource = function(req, res) {
+var find = function(type, resource, res) {
 
 	// console.log
-	console.log("view_resource");
+	console.log("find");
+
+	// retrieve information from cache
+	cache.view(type, resource)
+
+	.then(function(result) {
+		res.send({
+			"success": true,
+			"payload": result
+		});
+	}, function(error) {
+		res.send({
+			"success": false,
+			"payload": error.toString()
+		});
+	})	
+}
+
+
+var view_jobs = function(req, res) {
+
+	// console.log
+	console.log("view_jobs");
 
 	// parse query to get request data
-	var resource = req.query.resource
+	var id = req.query.resource;
 
-	// retrieve hash userid from the user register
+	var resource = {"_id": id};
+	if (id === undefined) {
+		resource = {};
+	}
+
+	return find("job", resource, res);
+}
 
 
-	// retrieve other user info from the other registers
+var view_resources = function(req, res) {
 
-	res.send({
-		"success": true,
-		"payload": {
-			"address": address
-		}
-	});
+	// console.log
+	console.log("view_resources");
+
+	// parse query to get request data
+	var id = req.query.resource;
+
+	var resource = {"_id": id};
+	if (id === undefined) {
+		resource = {};
+	}
+
+	return find("data", resource, res);
+}
+
+
+var search = function(req, res) {
+
+	// console.log
+	console.log("search");
+
+	// parse query to get request data
+	var query = req.query;
+	var type = query['type'];
+	delete query['type'];
+
+	console.log(type, query);
+	return find(type, query, res);
 }
 
 
@@ -332,9 +374,24 @@ var retrieve_resource = function(req, res) {
 	console.log("retrieve_resource")
 
 	// parse query to get request data
-	var resource = req.query.resource
+	var address = req.query.address; // address of the buyer
+	var resource = req.query.resource; // the resource identifier
+	var sym_key = req.query.key; // symmetric key (hex string)
 
-	// 
+	// retrieve data
+	blockchain.offer_transact(resource, address, sym_key)
+
+	.then(function(result) {
+		res.send({
+			"success": true,
+			"payload": result
+		});
+	}, function(error) {
+		res.send({
+			"success": false,
+			"payload": error.toString()
+		});
+	})
 
 }
 
@@ -344,8 +401,9 @@ module.exports = {
 	register_user,
 	register_resource,
 	register_job,
-	view_user,
-	view_resource,
+	view_users,
+	view_resources,
+	view_jobs,
 	buy,
 	sell,
 	sync,

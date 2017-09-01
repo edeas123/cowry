@@ -67,7 +67,7 @@ var register = function(registry, key, hex_data) {
 
 
 // atomic transaction
-var offer_transact = function(resource, my_address) {
+var offer_transact = function(resource, my_address, sym_key) {
 
 	var deferred = Q.defer();
 
@@ -106,7 +106,8 @@ var offer_transact = function(resource, my_address) {
 
 				// TODO: encrypt and send to buy stream, using the recipient address as key and the encrypted data as val
 				// generate a symmetric key
-				sym_key = utils.get_symmetric()
+				//sym_key = utils.get_symmetric()
+				sym_key = Buffer.from(sym_key, 'hex');
 
 				// encrypt the transaction
 				enc_hex_blob = utils.encrypt_data(hex_blob, sym_key);

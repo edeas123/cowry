@@ -35,14 +35,15 @@ router.post('/sell', routes.sell);
 router.post('/rate', routes.rate);   // pending
 
 // search routes
-router.get('/search', routes.search);  // pending
+router.get('/search', routes.search);
 
 // cache routes
 router.post('/sync', routes.sync);
 
 // view routes
-router.get('/users', routes.view_user); // pending
-router.get('/resource', routes.view_resource); // pending
+router.get('/users', routes.view_users); // pending
+router.get('/resources', routes.view_resources);
+router.get('/jobs', routes.view_jobs);
 router.get('/retrieve', routes.retrieve_resource); // pending
 
 // register routes
