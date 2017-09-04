@@ -30,9 +30,9 @@ router.post('/users/:address/resources', routes.register_resource); //  register
 router.post('/users/:address/jobs', routes.register_job); //  register a new resource request (job) on the platform via this node
 
 // trading routes
-router.get('/buy', routes.buy);
+router.get('/users/:address/buy', routes.buy);
 router.post('/sell', routes.sell);
-router.post('/rate', routes.rate);   // pending
+router.post('/users/:address/rate', routes.rate);
 
 // search routes
 router.get('/search', routes.search);
@@ -41,10 +41,11 @@ router.get('/search', routes.search);
 router.post('/sync', routes.sync);
 
 // view routes
-router.get('/users', routes.view_users); // pending
+router.get('/users', routes.view_users);
+router.get('/ratings', routes.view_rating);
 router.get('/resources', routes.view_resources);
 router.get('/jobs', routes.view_jobs);
-router.get('/retrieve', routes.retrieve_resource); // pending
+router.get('/retrieve', routes.retrieve_resource);
 
 // register routes
 app.use('/', router);

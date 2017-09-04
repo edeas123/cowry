@@ -104,7 +104,7 @@ var register_job = function(req, res) {
 	hex_job = utils.encode_data(job);
 	blockchain.register("job", key, hex_job)
 
-	// return the transaction id and the resource uid
+	// returns result if successful
 	.then(function(result) {
 		res.send({
 			"success": true,
@@ -132,7 +132,7 @@ var sync = function(req, res) {
 
 		// retrieve asset list from blockchain
 		var new_txn = item['data']
-		blockchain.get_transaction(new_txn)
+		blockchain.get_asset(new_txn)
 
 		// update the database
 		.then(function(new_dataset) {
@@ -188,7 +188,7 @@ var buy = function(req, res) {
 	console.log("buy");
 
 	// parse query to get request data
-	var address = req.query.address; // address of the buyer
+	var address = req.params.address; // address of the buyer
 	var resource = req.query.resource; // the resource identifier
 	var sym_key = req.query.key; // symmetric key (hex string)
 
@@ -235,12 +235,14 @@ var sell = function(req, res) {
 				var price = result[0]['price']
 				var data = result[0]['value']
 				var private_key = result[0]['private_key']
-				var address = result[0]['address']
-				//var address = "1ML34xbhBx1HivynmjkXu8agLX5tzvU53w87RB";//result[0]['address']
+				//var address = result[0]['address']
+				var address = "1ML34xbhBx1HivynmjkXu8agLX5tzvU53w87RB";//result[0]['address']
 
 				// TODO: decrypt the data, using the appropriate private key
 				var txn_data = utils.decode_data(item['data']);
 				var sym_key = utils.decrypt_password(private_key, txn_data['key']);
+				var hash_sym_key = utils.hash(sym_key);
+				console.log("SDFF", sym_key, hash_sym_key);
 
 				var hex_blob = utils.decrypt_data(txn_data['data'], sym_key);
 
@@ -252,7 +254,7 @@ var sell = function(req, res) {
 				enc_data = utils.encrypt_data(final_data, sym_key);
 
 				// accept payment
-				return blockchain.accept_payment(hex_blob, price, resource, address, enc_data)
+				return blockchain.accept_payment(hex_blob, price, resource, address, enc_data, hash_sym_key)
 			}
 
 			return "Not my data o";
@@ -271,31 +273,39 @@ var sell = function(req, res) {
 	}
 }
 
+// the rating is written to the rating stream:
+// the key is the seller address, for ease of retrieval
+// the value is the json: {"txnid" :"", "resource": "", "rating": "", "comments":""}
+// the retrieval mechanism verifies that the publisher and the key digitally signed the transaction
 
 var rate = function(req, res) {
 
-}
-
-var view_users = function(req, res) {
-
 	// console.log
-	console.log("view_users");
+	console.log("rate")
 
-	// parse query to get request data
-	var hashid = req.query.address
+	// parse body to get request data
+	var rating = req.body; // the json: {"txnid" :"", "resource": "", "rating": "", "comments":""}
+	var seller = req.query.seller; // address of the seller
+	var buyer = req.params.buyer; // address of buyer
 
-	// retrieve hash userid from the user register
+	// add the resource details to the job register of the blockchain
+	hex_rating = utils.encode_data(rating);
+	blockchain.register("rating", seller, hex_rating)
 
-
-	// retrieve other user info from the other registers
-
-	res.send({
-		"success": true,
-		"payload": {
-			"address": address
-		}
-	});
+	// returns result if successful
+	.then(function(result) {
+		res.send({
+			"success": true,
+			"payload": result
+		});
+	}, function(error) {
+		res.send({
+			"success": false,
+			"payload": error.toString()
+		});
+	})
 }
+
 
 var find = function(type, resource, res) {
 
@@ -374,12 +384,51 @@ var retrieve_resource = function(req, res) {
 	console.log("retrieve_resource")
 
 	// parse query to get request data
-	var address = req.query.address; // address of the buyer
-	var resource = req.query.resource; // the resource identifier
 	var sym_key = req.query.key; // symmetric key (hex string)
+	sym_key = Buffer.from(sym_key, "hex");
 
 	// retrieve data
-	blockchain.offer_transact(resource, address, sym_key)
+	var hash_sym_key = utils.hash(sym_key);
+	blockchain.read_register(hash_sym_key, "sell")
+
+	.then(function(txnid) {
+		// handle error when resource not available yet
+		if (txnid.length == 0) {
+			return [];
+		}
+
+		//Note: if use repeats multiple sym key in transaction, retrieve only the last resource
+		//TODO: Retrieve all resource
+
+		var index = txnid.length - 1; 
+		return blockchain.get_transaction(txnid[index])
+	})
+
+	.then(function(data) {
+		res.send({
+			"success": true,
+			"payload": utils.decrypt_data(data[0], sym_key)
+		});
+	}, function(error) {
+		res.send({
+			"success": false,
+			"payload": error.toString()
+		});
+	})	
+
+}
+
+var view_rating =  function(req, res) {
+
+	// console.log
+	console.log("view_rating");
+
+	// parse query to get request data
+	var address = req.query.address;
+
+	// retrieve user details from the user register
+	console.log(address);
+	blockchain.read_register("rating", address)
 
 	.then(function(result) {
 		res.send({
@@ -393,8 +442,64 @@ var retrieve_resource = function(req, res) {
 		});
 	})
 
+	// // console.log
+	// console.log("get_rating")
+
+	// // get rating
+	// blockchain.read_register("rating", user)
+
+	// .then(function(data) {
+	// 	// for each rating, 
+	// 	for (let i in data) {
+	// 		// decode the rating
+	// 		var rating = utils.decode(data[i]) 			// TODO: This needs to be more robust, incase of faulty data saved in the register
+
+	// 		// get the transaction details
+
+	// 	}		
+	// 	// verify that the publisher (rater) and the key(rated) are the two people that formed the transaction
+
+
+	// })
+	// .then(function(result) {
+	// 	res.send({
+	// 		"success": true,
+	// 		"payload": result
+	// 	});
+	// }, function(error) {
+	// 	res.send({
+	// 		"success": false,
+	// 		"payload": error.toString()
+	// 	});
+	// })
+
 }
 
+
+var view_users = function(req, res) {
+
+	// console.log
+	console.log("view_users");
+
+	// parse query to get request data
+	var address = req.query.address;
+
+	// retrieve user details from the user register
+	console.log(address);
+	blockchain.read_register("user", address)
+
+	.then(function(result) {
+		res.send({
+			"success": true,
+			"payload": result
+		});
+	}, function(error) {
+		res.send({
+			"success": false,
+			"payload": error.toString()
+		});
+	})
+}
 
 
 module.exports = {
@@ -402,6 +507,7 @@ module.exports = {
 	register_resource,
 	register_job,
 	view_users,
+	view_rating,
 	view_resources,
 	view_jobs,
 	buy,

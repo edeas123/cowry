@@ -17,6 +17,14 @@ var decode_data = function(data) {
 	return decoded_data;
 }
 
+var hash = function(value) {
+
+	const hash = crypto.createHash('sha256');
+	hash.update(value);
+
+	return hash.digest('hex');
+}
+
 var get_symmetric = function() {
 	return crypto.randomBytes(32); // returns a Buffer
 }
@@ -78,5 +86,6 @@ module.exports = {
 	encrypt_password,
 	decrypt_password,
 	decrypt_data,
+	hash,
 	get_symmetric
 }

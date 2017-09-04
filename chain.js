@@ -134,7 +134,7 @@ var offer_transact = function(resource, my_address, sym_key) {
 	return deferred.promise;
 }
 
-var get_transaction = function(txnid) {
+var get_asset = function(txnid) {
 
 	var deferred = Q.defer();
 
@@ -151,10 +151,47 @@ var get_transaction = function(txnid) {
 	return deferred.promise;
 }
 
+var get_transaction = function(txnid) {
 
-var accept_payment = function(hex_blob, price, resource, my_address, enc_data_value) {
+	var deferred = Q.defer();
 
-	console.log(hex_blob, price, resource, my_address, enc_data_value);
+	client.cmd("getwallettransaction", txnid, function(err, txn, res) {
+		if (err) {
+			console.log(err);
+			deferred.reject(err)
+			return;
+		}
+
+		deferred.resolve(txn['data'])
+	});
+
+	return deferred.promise;
+}
+
+
+var read_register = function(key, type) {
+
+	var deferred = Q.defer();
+
+	client.cmd("liststreamkeyitems", type, key, function(err, ret, res) {
+		if (err) {
+			deferred.reject(err);
+			return;
+		}
+
+		var data = [];
+		for (let i in ret) {
+			data[i] = ret[i]['data'];
+		}
+		deferred.resolve(data);
+	});
+
+	return deferred.promise;
+}
+
+
+var accept_payment = function(hex_blob, price, resource, my_address, enc_data_value, hash_sym_key) {
+
 	var deferred = Q.defer();
 
 	// decode the transaction
@@ -180,7 +217,7 @@ var accept_payment = function(hex_blob, price, resource, my_address, enc_data_va
 			rx_asset_amount[resource] = 1;
 
 			client.cmd("preparelockunspentfrom", my_address, rx_asset_amount, function(err, result, res) {
-				console.log("preparelockunspentfrom")
+				// console.log("preparelockunspentfrom")
 				if (err) {
 					console.log(err);
 					deferred.reject(err);
@@ -191,7 +228,7 @@ var accept_payment = function(hex_blob, price, resource, my_address, enc_data_va
 				//hex_data_value = utils.encode_data(enc_data_value);
 
 				client.cmd("completerawexchange", hex_blob, result["txid"], result["vout"], tx_asset_amount, enc_data_value, function(err, hex_blob, res) {
-					console.log("completerawexchange")
+					// console.log("completerawexchange")
 					if (err) {
 						console.log(err);
 						deferred.reject(err);
@@ -200,15 +237,21 @@ var accept_payment = function(hex_blob, price, resource, my_address, enc_data_va
 
 					// send transaction
 					client.cmd("sendrawtransaction", hex_blob, function(err, txn, res) {
-						console.log("sendrawtransaction")
+						// console.log("sendrawtransaction")
 						if (err) {
 							console.log(err);
 							deferred.reject(err);
 							return;
 						}
 
-						console.log(txn);
-						deferred.resolve(txn)
+						client.cmd("publish", "sell", hash_sym_key, txn, function(err, txnid, res) {
+							if (err) {
+								deferred.reject(err);
+								return;
+							}
+							// console.log(txn);
+							deferred.resolve(txn)
+						});
 					});
 				});
 			});
@@ -284,7 +327,7 @@ config['port'] = parseInt(config['port']);
 var client = new multichain.Client(config);
 
 // setup the registers on the multichain blockchain
-registers = ["job", "user", "data", "buy", "rating"]
+registers = ["job", "user", "data", "buy", "rating", "sell"]
 
 if (config['firstnode'] == "true") {
 	console.log("This is the first node?", config['firstnode'])
@@ -334,5 +377,7 @@ module.exports = {
 	register,
 	offer_transact,
 	get_transaction,
-	accept_payment
+	get_asset,
+	accept_payment,
+	read_register
 }
