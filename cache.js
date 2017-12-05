@@ -38,9 +38,12 @@ var insert = function(collection, new_dataset) {
 	return deferred.promise;
 }
 
+var deferred = Q.defer();
+
 MongoClient.connect(url, function(err, db) {
 	if (err) {
-		deferred.reject(err)
+		deferred.reject(err);
+		console.log("Cowry Database not connected!");
 		return
 	}
 

@@ -14,7 +14,7 @@ if (items.length > 0) {
         if ((item['name'] === "data") || (item['name'] === "job") || (item['name'] === "buy")) {
             var message = {"full_size": items.length, "data": item};
             var request = require("request");
-
+		// console.log(message);
             switch(item['name']) {
                 case "data":
                     url = 'http://localhost:9090/sync'

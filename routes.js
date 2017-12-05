@@ -235,8 +235,8 @@ var sell = function(req, res) {
 				var price = result[0]['price']
 				var data = result[0]['value']
 				var private_key = result[0]['private_key']
-				//var address = result[0]['address']
-				var address = "1ML34xbhBx1HivynmjkXu8agLX5tzvU53w87RB";//result[0]['address']
+				var address = result[0]['address']
+				//var address = "1ML34xbhBx1HivynmjkXu8agLX5tzvU53w87RB";//result[0]['address']
 
 				// TODO: decrypt the data, using the appropriate private key
 				var txn_data = utils.decode_data(item['data']);
@@ -337,7 +337,7 @@ var view_jobs = function(req, res) {
 	// parse query to get request data
 	var id = req.query.resource;
 
-	var resource = {"_id": id};
+	var resource = {"id": id};
 	if (id === undefined) {
 		resource = {};
 	}
@@ -354,7 +354,7 @@ var view_resources = function(req, res) {
 	// parse query to get request data
 	var id = req.query.resource;
 
-	var resource = {"_id": id};
+	var resource = {"id": id};
 	if (id === undefined) {
 		resource = {};
 	}

@@ -267,7 +267,7 @@ var create_asset = function(address, asset) {
 	var deferred = Q.defer();
 
 	var quantity = parseInt(asset['quantity']);
-	var uid = asset['_id'];
+	var uid = asset['id'];
 	var units = 1.0;
 	var metadata = asset;
 
