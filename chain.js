@@ -351,9 +351,6 @@ if (config['firstnode'] == "true") {
 subscribe(registers);
 
 // connect to the mongodb database
-
-
-
 module.exports = {
 	create_address,
 	create_asset,
