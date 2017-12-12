@@ -1,25 +1,24 @@
 // ========== blockchain layer: multichain driver =============
 
 // call the required packages
-var multichain = require('bitcoin-promise');
-var conv = require('binstring');
-var keypair = require('keypair');
-var Q = require('q');
-var fs = require('fs');
-var utils = require("./utils");
-var path = require('path');
+const multichain = require('bitcoin-promise');
+const conv = require('binstring');
+const keypair = require('keypair');
+const Q = require('q');
+const fs = require('fs');
+const utils = require("./utils");
+const path = require('path');
 
 // subscribe to a blockchain source (asset, stream)
-var subscribe = function(source) {
+function subscribe(source) {
 
-	var deferred = Q.defer();
+	const deferred = Q.defer();
 	client.cmd("subscribe", source, function(err, ret, res) {
 		if (err) {
 			console.log(err);
 			deferred.reject(err);
 			return;
 		}
-
 		deferred.resolve(ret);
 	});
 
@@ -27,8 +26,8 @@ var subscribe = function(source) {
 }
 
 // create a new address on the blockchain for current node
-var create_address = function() {
-	var deferred = Q.defer();
+function create_address() {
+	const deferred = Q.defer();
 
 	client.cmd("getnewaddress", function(err, address, res) {
 		if (err) {
@@ -36,7 +35,6 @@ var create_address = function() {
 			deferred.reject(err);
 			return;
 		}
-
 		deferred.resolve(address)
 	});
 
@@ -44,32 +42,31 @@ var create_address = function() {
 }
 
 // write data to the multichain stream 
-var register = function(registry, key, hex_data) {
-	var deferred = Q.defer();
+function register(registry, key, hex_data) {
+	const deferred = Q.defer();
 
+	// TODO: may need to modify this to support multiple keys
+    // TODO: change to publishby, use the publisher to track the users assets
+    // TODO: the keys should represent the assets IDs, search_blockchain would be done via the key
 	client.cmd("publish", registry, key, hex_data, function(err, txnid, res) {
 		if (err) {
 			console.log(err);
 			deferred.reject(err);
 			return;
 		}
-
 		deferred.resolve({
 			"txnid": txnid,
 			"key": key,
 			"data": hex_data
 		})
 	});
-
 	return deferred.promise;
 }
 
-
-
 // atomic transaction
-var offer_transact = function(resource, my_address, sym_key) {
+function offer_transact(resource, my_address, sym_key) {
 
-	var deferred = Q.defer();
+	const deferred = Q.defer();
 
 	// retrieve resource information
 	client.cmd("listassets", resource, function(err, asset_list, res) {
@@ -79,12 +76,12 @@ var offer_transact = function(resource, my_address, sym_key) {
 			return;
 		}
 
-		asset_info = asset_list[0]['details'];
-		seller_key = asset_info['public_key'];
-		tx_asset_amount = {
+		const asset_info = asset_list[0]['details'];
+		const seller_key = asset_info['public_key'];
+		const tx_asset_amount = {
 			"cowries": parseFloat(asset_info['price'])
 		};
-		rx_asset_amount = {};
+		let rx_asset_amount = {};
 		rx_asset_amount[resource] = 1;
 		//seller_address = asset_info['seller'];
 
@@ -104,10 +101,7 @@ var offer_transact = function(resource, my_address, sym_key) {
 					return;
 				}
 
-				// TODO: encrypt and send to buy stream, using the recipient address as key and the encrypted data as val
-				// generate a symmetric key
-				//sym_key = utils.get_symmetric()
-				sym_key = Buffer.from(sym_key, 'hex');
+				const sym_key = Buffer.from(sym_key, 'hex');
 
 				// encrypt the transaction
 				enc_hex_blob = utils.encrypt_data(hex_blob, sym_key);
@@ -119,18 +113,13 @@ var offer_transact = function(resource, my_address, sym_key) {
 				final_txn_data = utils.encode_data({
 					"key": enc_sym_key,
 					"data": enc_hex_blob
-				})
+				});
 
-				// you also need to send the buyer's public key for encryption (this would be prepadded to the blob)
-				register("buy", resource, final_txn_data)
-
+				register("buy", resource, final_txn_data);
 				deferred.resolve(hex_blob)
 			});
-
 		});
-
 	});
-
 	return deferred.promise;
 }
 
@@ -262,30 +251,24 @@ var accept_payment = function(hex_blob, price, resource, my_address, enc_data_va
 }
 
 // create the data resource to be traded on the blockchain
-var create_asset = function(address, asset) {
+function create_asset(address, asset) {
 
-	var deferred = Q.defer();
-
-	var quantity = parseInt(asset['quantity']);
-	var uid = asset['id'];
-	var units = 1.0;
-	var metadata = asset;
+	const deferred = Q.defer();
+	const quantity = parseInt(asset['quantity']);
+	const uid = asset['id'];
+	const units = 1.0;
 
 	client.cmd("issue", address, {
 		"name": uid,
 		"open": true
-	}, quantity, units, 0, metadata, function(err, txnid, res) {
+	}, quantity, units, 0, asset, function(err, txnid, res) {
 		if (err) {
 			console.log(err);
 			deferred.reject(err);
 			return;
 		}
-
-		console.log(txnid);
 		deferred.resolve(txnid)
-
 	});
-
 	return deferred.promise;
 }
 
@@ -365,7 +348,7 @@ if (config['firstnode'] == "true") {
 }
 
 // subscribe this node for all the registers
-subscribe(registers)
+subscribe(registers);
 
 // connect to the mongodb database
 
@@ -380,4 +363,4 @@ module.exports = {
 	get_asset,
 	accept_payment,
 	read_register
-}
+};

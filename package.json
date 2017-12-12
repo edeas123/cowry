@@ -1,6 +1,6 @@
 {
   "name": "cowry",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "blockchain-based platform for monetization of data and web services",
   "main": "api.js",
   "scripts": {

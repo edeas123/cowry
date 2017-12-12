@@ -1,0 +1,38 @@
+Starting from the bare linux machine:
+
+1. Install the fundamentals: node, mysql, mongodb, multichain
+
+node:
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+mongodb:
+sudo apt-get install -y build-essential
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
+echo "deb http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+mysql:
+sudo apt-get update
+sudo apt-get install mysql-server
+mysql_secure_installation
+systemctl status mysql.service
+
+multichain:
+su
+cd /tmp
+wget https://www.multichain.com/download/multichain-1.0.2.tar.gz
+tar -xvzf multichain-1.0.2.tar.gz
+cd multichain-1.0.2
+mv multichaind multichain-cli multichain-util /usr/local/bin
+
+2. Download and extract Cowry files from github
+3. Setup the blockchain.
+    You will need to get the following: blockchain name, rpc_port, password, primary address
+    You will also need to configure the oracle for syncing
+4. Configure the blockchain via the blockchain.cfg file
+5. Configure the Cowry database via the datastore.cfg file
+6. Test the blockchain
+7. Transfer some funds from the firstnode to the other experiment node
+8. Test the Cowry APIs

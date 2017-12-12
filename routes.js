@@ -1,21 +1,21 @@
 // ========== middleware layer: cowry core  =============
 
 // call required modules
-var blockchain = require("./chain");
-var utils = require("./utils");
-var cache = require("./cache");
-var datastore = require("./datastore");
+const blockchain = require("./chain");
+const utils = require("./utils");
+const cache = require("./cache");
+const datastore = require("./datastore");
 
 // register a new user account on the blockchain
 // input: {"uid": "hex string"}
 // output: {"txnid":"", "address":"", "data":""}
-var register_user = function(req, res) {
+function register_user(req, res) {
 
 	// console log
 	console.log("register_user");
 
 	// parse body to get request data
-	var user = req.body;
+	const user = req.body;
 
 	// TODO:
 	// verify that the input has the uid, that is the minimum required data, any additional details
@@ -26,7 +26,7 @@ var register_user = function(req, res) {
 
 	// add the account to the user register of the blockchain
 	.then(function(address) {
-		hex_user = utils.encode_data(user);
+		const hex_user = utils.encode_data(user);
 		return blockchain.register("user", address, hex_user);
 	})
 
@@ -49,20 +49,19 @@ var register_user = function(req, res) {
 //			desc": "", "loc":"", "type": "", "period":"", "pub_key": ""
 //			"hash":"", "size":"","license":"", "price": "", "expiration":"",...}
 // output: {"uid":"", "txnid": ""}
-var register_resource = function(req, res) {
+function register_resource(req, res) {
 
 	// console.log
 	console.log("register_resource");
 
-	// TODO:
-	// verify that the input has uid, price, type, license , desc is present
+	// TODO: verify that the input has uid, price, type, license , desc is present
 
 	// parse body to get request data
-	var data = req.body;
-	var key = req.params.address;
+	let data = req.body;
+	const key = req.params.address;
 
 	// include the seller information
-	data["seller"] = key
+	data["seller"] = key;
 
 	// create data resource as asset on the blockchain
 	blockchain.create_asset(key, data)
@@ -87,18 +86,17 @@ var register_resource = function(req, res) {
 	});
 }
 
-
 // register a new job on the blockchain
 // input: {"uid": "", "desc": "", "loc":"", "type": "", "period":"","license":"" ...}
 // output: {"uid":"", "txnid": ""}
-var register_job = function(req, res) {
+function register_job(req, res) {
 
 	// console.log
 	console.log("register_job");
 
 	// parse body to get request data
-	var job = req.body;
-	var key = req.params.address;
+	const job = req.body;
+	const key = req.params.address;
 
 	// add the resource details to the job register of the blockchain
 	hex_job = utils.encode_data(job);
@@ -116,22 +114,21 @@ var register_job = function(req, res) {
 			"payload": error.toString()
 		});
 	})
-
 }
 
-var sync = function(req, res) {
+function sync(req, res) {
 
 	// console.log
 	console.log("sync");
 
 	// parse body to get request data
-	var item = req.body.data;
+	const item = req.body.data;
 
 	// caching all the published data in a local mongodb database for ease of searching
 	if (item['name'] === "data") {
 
 		// retrieve asset list from blockchain
-		var new_txn = item['data']
+		const new_txn = item['data'];
 		blockchain.get_asset(new_txn)
 
 		// update the database
@@ -139,6 +136,8 @@ var sync = function(req, res) {
 			return cache.insert("data", new_dataset);
 		})
 
+		// TODO: consider implementing the purging/pruning of the database here
+        // TODO: pruning is by expiring date which defaults at 1 month. hence function need only run once a month
 		.then(function(result) {
 			res.send({
 				"success": true,
@@ -152,14 +151,12 @@ var sync = function(req, res) {
 		})
 	}
 
-	// caching all the publish data or jobs in a local mongodb database for each search
+	// caching all the publish data or jobs in a local mongodb database for easy search
 	// this means monitor the jobs stream and write everything to the local database
 	if (item['name'] === "job") {
 
-		console.log("job");
-
 		// retrieve job details from the stream data
-		var new_dataset = JSON.parse(Buffer.from(item['data'], 'hex').toString());
+		const new_dataset = JSON.parse(Buffer.from(item['data'], 'hex').toString());
 
 		// update the database
 		cache.insert("job", new_dataset)
@@ -182,15 +179,15 @@ var sync = function(req, res) {
 // request to purchase a data item on the blockchain
 // input: {"uid": ""}
 // output: {}
-var buy = function(req, res) {
+function buy(req, res) {
 
 	// console.log
 	console.log("buy");
 
 	// parse query to get request data
-	var address = req.params.address; // address of the buyer
-	var resource = req.query.resource; // the resource identifier
-	var sym_key = req.query.key; // symmetric key (hex string)
+	const address = req.params.address; // address of the buyer
+	const resource = req.query.resource; // the resource identifier
+	const sym_key = req.query.key; // symmetric key (hex string)
 
 	// make atomic transactions
 	blockchain.offer_transact(resource, address, sym_key)

@@ -1,13 +1,13 @@
 // ========== web service layer =============
 
 // call the required packages
-var express = require('express');
-var bodyparser = require('body-parser');
-var http = require('http')
-var routes = require('./routes')
+const express = require('express');
+const bodyparser = require('body-parser');
+const http = require('http');
+const routes = require('./routes');
 
 // initialize express app
-var app = express();
+const app = express();
 
 // setup bodyparser
 app.use(bodyparser.urlencoded({
@@ -16,18 +16,17 @@ app.use(bodyparser.urlencoded({
 app.use(bodyparser.json());
 
 // initialize service port
-var port = process.env.PORT || 9090;
+const port = process.env.PORT || 9090;
 
 // initialize router
-var router = express.Router();
+const router = express.Router();
 
 // setup routes
-
-
 // entities routes
 router.post('/users', routes.register_user); // create a new identity (buyer or seller) on the platform via this node - this allows a node to have multiple identities.
 router.post('/users/:address/resources', routes.register_resource); //  register a new resource (data or service) on the platform via this node
 router.post('/users/:address/jobs', routes.register_job); //  register a new resource request (job) on the platform via this node
+// TODO router.post('/users/:address/upload', routes.upload_data); I need to include routes that ties to the resources route. It will be called with the actual data, which would be
 
 // trading routes
 router.get('/users/:address/buy', routes.buy);
@@ -36,6 +35,7 @@ router.post('/users/:address/rate', routes.rate);
 
 // search routes
 router.get('/search', routes.search);
+// TODO router.get('/search_blockchain', routes.search_blockchain); Run the search directly on the blockchain instead of the local CowryDB
 
 // cache routes
 router.post('/sync', routes.sync);
@@ -47,7 +47,7 @@ router.get('/resources', routes.view_resources);
 router.get('/jobs', routes.view_jobs);
 router.get('/retrieve', routes.retrieve_resource);
 
-// register routes
+// register router
 app.use('/', router);
 
 // start server
